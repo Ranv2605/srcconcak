@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MusicHub - Đăng ký</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#0b0b0b;
+}
+body::before{
+    content:'';
+    position:absolute;
+    width:700px;
+    height:700px;
+    background:linear-gradient(#1ed760,#00b34a);
+    border-radius:50%;
+    filter:blur(180px);
+    opacity:.3;
+}
+.container{
+    width:900px;
+    display:flex;
+    background:#151515;
+    border-radius:20px;
+    overflow:hidden;
+    box-shadow:0 0 40px rgba(0,0,0,.5);
+}
+.left{
+    flex:1;
+    background:linear-gradient(135deg,#1ed760,#0b8f40);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:#fff;
+    padding:50px;
+    text-align:center;
+}
+.left h1{
+    font-size:40px;
+    margin-bottom:15px;
+}
+.right{
+    flex:1;
+    padding:50px;
+    color:white;
+}
+.right h2{
+    margin-bottom:25px;
+}
+.input-box{
+    margin-bottom:18px;
+}
+.input-box label{
+    display:block;
+    margin-bottom:8px;
+    color:#aaa;
+}
+.input-box input{
+    width:100%;
+    padding:14px;
+    background:#252525;
+    border:none;
+    border-radius:10px;
+    color:white;
+    outline:none;
+}
+.input-box input:focus{
+    border:2px solid #1ed760;
+}
+button{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:10px;
+    background:#1ed760;
+    color:#000;
+    font-weight:bold;
+    cursor:pointer;
+    transition:.3s;
+}
+button:hover{
+    background:#2cff76;
+}
+.message{
+    margin-top:15px;
+    text-align:center;
+}
+.success{
+    color:#1ed760;
+}
+.error{
+    color:#ff5b5b;
+}
+a{
+    color:#1ed760;
+    text-decoration:none;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<div class="left">
+<div>
+<h1>MusicHub</h1>
+<p>Tạo tài khoản để bắt đầu nghe nhạc.</p>
+</div>
+</div>
+
+<div class="right">
+
+<h2>Đăng ký</h2>
+
+<div class="input-box">
+<label>Họ tên</label>
+<input type="text" id="name">
+</div>
+
+<div class="input-box">
+<label>Email</label>
+<input type="email" id="email">
+</div>
+
+<div class="input-box">
+<label>Mật khẩu</label>
+<input type="password" id="password">
+</div>
+
+<div class="input-box">
+<label>Nhập lại mật khẩu</label>
+<input type="password" id="confirm">
+</div>
+
+<button onclick="register()">
+Đăng ký
+</button>
+
+<div id="message" class="message"></div>
+
+<p style="margin-top:20px;text-align:center;">
+Đã có tài khoản?
+<a href="login.html">Đăng nhập</a>
+</p>
+
+</div>
+
+</div>
+
+<script>
+
+function register(){
+
+    const name=document.getElementById("name").value.trim();
+    const email=document.getElementById("email").value.trim();
+    const password=document.getElementById("password").value;
+    const confirm=document.getElementById("confirm").value;
+    const msg=document.getElementById("message");
+
+    msg.className="message";
+
+    if(name==""||email==""||password==""||confirm==""){
+        msg.classList.add("error");
+        msg.innerHTML="Vui lòng nhập đầy đủ thông tin.";
+        return;
+    }
+
+    if(password.length<6){
+        msg.classList.add("error");
+        msg.innerHTML="Mật khẩu phải có ít nhất 6 ký tự.";
+        return;
+    }
+
+    if(password!==confirm){
+        msg.classList.add("error");
+        msg.innerHTML="Mật khẩu xác nhận không khớp.";
+        return;
+    }
+
+    let users=JSON.parse(localStorage.getItem("users"))||[];
+
+    if(users.find(user=>user.email===email)){
+        msg.classList.add("error");
+        msg.innerHTML="Email đã được sử dụng.";
+        return;
+    }
+
+    users.push({
+        name:name,
+        email:email,
+        password:password
+    });
+
+    localStorage.setItem("users",JSON.stringify(users));
+
+    msg.classList.add("success");
+    msg.innerHTML="Đăng ký thành công! Đang chuyển sang trang đăng nhập...";
+
+    setTimeout(()=>{
+        window.location.href="login.html";
+    },1500);
+
+}
+
+</script>
+
+</body>
+</html>
