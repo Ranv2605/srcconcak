@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MusicHub – Online Music Streaming</title>
+<style>
+  :root{
+    --bg-app:#0a0a0a;
+    --bg-sidebar:#000000;
+    --bg-card:#161616;
+    --bg-card-hover:#242424;
+    --bg-elevated:#1c1c1c;
+    --text-primary:#ffffff;
+    --text-secondary:#a7a7a7;
+    --text-faint:#6a6a6a;
+    --accent:#1ed760;
+    --accent-hover:#3be477;
+    --accent-dim:rgba(30,215,96,0.15);
+    --danger:#f15e6c;
+    --border:#282828;
+    --radius-sm:6px;
+    --radius-md:10px;
+    --radius-lg:16px;
+    --font-display: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    --font-body: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:var(--font-body);
+    background:var(--bg-app);
+    color:var(--text-primary);
+    height:100vh;
+    overflow:hidden;
+  }
+  ::-webkit-scrollbar{width:10px; height:10px;}
+  ::-webkit-scrollbar-thumb{background:#3a3a3a; border-radius:10px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit;}
+  input{font-family:inherit;}
+  a{color:inherit; text-decoration:none;}
+  img{display:block;}
+ 
+  #app{
+    display:grid;
+    grid-template-columns:240px 1fr;
+    grid-template-rows:1fr 90px;
+    grid-template-areas:
+      "sidebar main"
+      "player player";
+    height:100vh;
+    gap:8px;
+    padding:8px;
+  }
+ 
+  /* ---------- SIDEBAR ---------- */
+  #sidebar{
+    grid-area:sidebar;
+    background:var(--bg-sidebar);
+    border-radius:var(--radius-lg);
+    display:flex;
+    flex-direction:column;
+    padding:20px 12px;
+    overflow-y:auto;
+  }
+  .logo{
+    display:flex; align-items:center; gap:10px;
+    padding:0 12px 24px 12px;
+  }
+  .logo-mark{
+    width:32px; height:32px; border-radius:9px;
+    background:linear-gradient(135deg,var(--accent),#0c8f3c);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:16px; color:#04220f;
+    flex-shrink:0;
+  }
+  .logo-text{font-size:19px; font-weight:800; letter-spacing:-0.02em;}
+ 
+  .nav-list{list-style:none; display:flex; flex-direction:column; gap:2px;}
+  .nav-item{
+    display:flex; align-items:center; gap:14px;
+    padding:10px 12px; border-radius:var(--radius-sm);
+    color:var(--text-secondary); font-size:14.5px; font-weight:600;
+    transition:color .15s ease, background .15s ease;
+  }
+  .nav-item svg{width:22px; height:22px; flex-shrink:0;}
+  .nav-item:hover{color:var(--text-primary);}
+  .nav-item.active{color:var(--text-primary); background:var(--bg-elevated);}
+ 
+  .sidebar-divider{height:1px; background:var(--border); margin:16px 8px;}
+ 
+  .lib-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:8px 12px; color:var(--text-secondary); font-size:14.5px; font-weight:700;
+  }
+  .playlist-list{list-style:none; display:flex; flex-direction:column; gap:1px; margin-top:6px;}
+  .playlist-item{
+    padding:9px 12px; border-radius:var(--radius-sm);
+    color:var(--text-secondary); font-size:13.5px;
+    display:flex; flex-direction:column; gap:2px;
+    cursor:pointer; transition:background .15s ease, color .15s ease;
+  }
+  .playlist-item:hover{background:var(--bg-elevated); color:var(--text-primary);}
+  .playlist-item b{color:var(--text-primary); font-size:13.5px; font-weight:600;}
+  .playlist-item span{font-size:12px; color:var(--text-faint);}
+ 
+  /* ---------- MAIN ---------- */
+  #main{
+    grid-area:main;
+    background:linear-gradient(180deg, #1a1a1a 0%, var(--bg-app) 320px);
+    border-radius:var(--radius-lg);
+    overflow-y:auto;
+    position:relative;
+  }
+  #topbar{
+    position:sticky; top:0; z-index:20;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 32px;
+    background:rgba(10,10,10,0.55);
+    backdrop-filter:blur(12px);
+  }
+  .nav-arrows{display:flex; gap:8px;}
+  .nav-arrows button{
+    width:32px; height:32px; border-radius:50%;
+    background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center;
+  }
+  .nav-arrows svg{width:18px; height:18px;}
+ 
+  #search-box{
+    flex:1; max-width:420px; margin:0 24px;
+    display:flex; align-items:center; gap:10px;
+    background:var(--bg-elevated); border:1px solid transparent;
+    border-radius:24px; padding:10px 16px;
+    transition:background .15s ease, border-color .15s;
+  }
+  #search-box:focus-within{background:#242424; border-color:#4a4a4a;}
+  #search-box svg{width:18px; height:18px; color:var(--text-secondary); flex-shrink:0;}
+  #search-input{
+    flex:1; background:transparent; border:none; outline:none;
+    color:var(--text-primary); font-size:14px;
+  }
+  #search-input::placeholder{color:var(--text-secondary);}
+  #search-clear{color:var(--text-secondary); display:none;}
+  #search-box.has-text #search-clear{display:block;}
+ 
+  .topbar-right{display:flex; align-items:center; gap:16px;}
+  #profile-chip{
+    display:flex; align-items:center; gap:8px;
+    background:rgba(0,0,0,0.6); border-radius:24px; padding:4px 8px 4px 4px;
+  }
+  #profile-chip:hover{background:#282828;}
+  .avatar-round{
+    width:28px; height:28px; border-radius:50%; overflow:hidden;
+    background:linear-gradient(135deg,#8e44ff,#3b82f6);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; flex-shrink:0;
+  }
+  .avatar-round img{width:100%; height:100%; object-fit:cover;}
+  #profile-chip-name{font-size:14px; font-weight:600; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+ 
+  .page{padding:0 32px 32px 32px; display:none;}
+  .page.active{display:block;}
+ 
+  .section-title{font-size:22px; font-weight:800; margin:24px 0 14px 0; letter-spacing:-0.01em;}
+  .section-row{display:flex; align-items:center; justify-content:space-between;}
+  .see-all{font-size:12.5px; font-weight:700; color:var(--text-secondary);}
+  .see-all:hover{text-decoration:underline; color:var(--text-primary);}
+ 
+  .card-grid{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+    gap:18px;
+  }
+  .song-card{
+    background:var(--bg-card); border-radius:var(--radius-md);
+    padding:14px; position:relative; transition:background .2s ease;
+    cursor:pointer;
+  }
+  .song-card:hover{background:var(--bg-card-hover);}
+  .cover{
+    width:100%; aspect-ratio:1/1; border-radius:var(--radius-sm);
+    margin-bottom:12px; position:relative; overflow:hidden;
+    box-shadow:0 8px 24px rgba(0,0,0,0.4);
+  }
+  .cover-eq{
+    position:absolute; inset:0; display:flex; align-items:flex-end; justify-content:center;
+    gap:3px; opacity:0; transition:opacity .2s ease;
+    background:rgba(0,0,0,0.35);
+  }
+  .cover-eq span{width:4px; background:#fff; border-radius:2px; animation:eq 0.9s ease-in-out infinite;}
+  .cover-eq span:nth-child(1){animation-delay:0s; height:40%;}
+  .cover-eq span:nth-child(2){animation-delay:.2s; height:70%;}
+  .cover-eq span:nth-child(3){animation-delay:.1s; height:50%;}
+  .cover-eq span:nth-child(4){animation-delay:.3s; height:85%;}
+  @keyframes eq{0%,100%{transform:scaleY(0.4);} 50%{transform:scaleY(1);}}
+  .song-card.playing .cover-eq{opacity:1;}
+ 
+  .play-fab{
+    position:absolute; right:8px; bottom:8px;
+    width:44px; height:44px; border-radius:50%;
+    background:var(--accent); display:flex; align-items:center; justify-content:center;
+    opacity:0; transform:translateY(6px);
+    transition:opacity .2s ease, transform .2s ease;
+    box-shadow:0 8px 16px rgba(0,0,0,0.5);
+  }
+  .song-card:hover .play-fab{opacity:1; transform:translateY(0);}
+  .play-fab svg{width:20px; height:20px; fill:#050505; margin-left:2px;}
+  .song-card-title{font-size:14.5px; font-weight:700; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .song-card-sub{font-size:12.5px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+ 
+  /* ---------- SEARCH PAGE ---------- */
+  #search-empty-state{padding-top:8px;}
+  .genre-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:16px; margin-top:16px;}
+  .genre-card{
+    position:relative; border-radius:var(--radius-md); height:110px; overflow:hidden;
+    padding:16px; font-weight:800; font-size:17px; cursor:pointer;
+  }
+  .genre-card svg.deco{position:absolute; right:-10px; bottom:-14px; width:76px; height:76px; opacity:0.85; transform:rotate(18deg);}
+ 
+  #search-results{display:none;}
+  #search-results.active{display:block;}
+  #search-empty-state.hidden{display:none;}
+ 
+  .track-table{width:100%; border-collapse:collapse; margin-top:8px;}
+  .track-row{
+    display:grid; grid-template-columns:32px 1fr 1fr 90px;
+    align-items:center; gap:16px; padding:8px 12px; border-radius:var(--radius-sm);
+    color:var(--text-secondary); cursor:pointer;
+  }
+  .track-row:hover{background:var(--bg-elevated);}
+  .track-row.playing .track-title, .track-row.playing .track-idx{color:var(--accent) !important;}
+  .track-idx{font-size:14px; text-align:center;}
+  .track-idx .row-eq{display:none; align-items:flex-end; gap:2px; height:14px; justify-content:center;}
+  .track-row.playing .track-idx .row-num{display:none;}
+  .track-row.playing .track-idx .row-eq{display:flex;}
+  .row-eq span{width:3px; background:var(--accent); border-radius:1px; animation:eq .9s ease-in-out infinite;}
+  .row-eq span:nth-child(1){animation-delay:0s; height:5px;}
+  .row-eq span:nth-child(2){animation-delay:.2s; height:12px;}
+  .row-eq span:nth-child(3){animation-delay:.1s; height:8px;}
+ 
+  .track-main{display:flex; align-items:center; gap:12px; min-width:0;}
+  .track-main .mini-cover{width:40px; height:40px; border-radius:4px; flex-shrink:0;}
+  .track-title{color:var(--text-primary); font-size:14.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .track-artist{font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .track-album{font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .track-duration{font-size:13px; text-align:right;}
+  .track-header-row{
+    display:grid; grid-template-columns:32px 1fr 1fr 90px; gap:16px; padding:0 12px 8px 12px;
+    border-bottom:1px solid var(--border); color:var(--text-faint); font-size:12px; text-transform:uppercase; letter-spacing:.04em;
+  }
+  .no-results{padding:60px 0; text-align:center; color:var(--text-secondary);}
+  .no-results b{color:var(--text-primary); display:block; font-size:20px; margin-bottom:8px;}
+ 
+  /* ---------- PROFILE PAGE ---------- */
+  #profile-hero{
+    display:flex; align-items:flex-end; gap:28px; padding:48px 32px 24px 32px;
+    background:linear-gradient(180deg,#3a2e5c, transparent);
+  }
+  #profile-avatar-wrap{position:relative; width:180px; height:180px; flex-shrink:0;}
+  #profile-avatar{
+    width:180px; height:180px; border-radius:50%; overflow:hidden;
+    background:linear-gradient(135deg,#8e44ff,#3b82f6);
+    display:flex; align-items:center; justify-content:center;
+    font-size:64px; font-weight:800; box-shadow:0 12px 40px rgba(0,0,0,0.6);
+  }
+  #profile-avatar img{width:100%; height:100%; object-fit:cover;}
+  #avatar-edit-btn{
+    position:absolute; right:8px; bottom:8px; width:44px; height:44px; border-radius:50%;
+    background:#000; border:1px solid #333; display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:opacity .15s ease; box-shadow:0 6px 16px rgba(0,0,0,0.6);
+  }
+  #profile-avatar-wrap:hover #avatar-edit-btn{opacity:1;}
+  #avatar-edit-btn svg{width:18px; height:18px;}
+ 
+  .profile-meta span{font-size:13px; font-weight:700; color:var(--text-secondary);}
+  #profile-name-display{font-size:56px; font-weight:900; letter-spacing:-0.02em; margin:8px 0; line-height:1.05;}
+  .profile-sub{font-size:13.5px; color:var(--text-secondary);}
+ 
+  #profile-body{padding:8px 32px 32px 32px;}
+  .settings-card{
+    background:var(--bg-card); border-radius:var(--radius-md); padding:24px; max-width:520px; margin-top:8px;
+  }
+  .field-group{margin-bottom:18px;}
+  .field-label{font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-secondary); font-weight:700; margin-bottom:8px; display:block;}
+  .text-input{
+    width:100%; background:#2a2a2a; border:1px solid #3a3a3a; border-radius:var(--radius-sm);
+    padding:11px 14px; color:var(--text-primary); font-size:14.5px; outline:none;
+  }
+  .text-input:focus{border-color:var(--text-primary);}
+  .btn-primary{
+    background:var(--accent); color:#04220f; font-weight:800; font-size:14px;
+    padding:11px 28px; border-radius:24px; transition:background .15s, transform .1s;
+  }
+  .btn-primary:hover{background:var(--accent-hover); transform:scale(1.02);}
+  .btn-primary:disabled{background:#3a3a3a; color:var(--text-faint); cursor:not-allowed; transform:none;}
+  .btn-secondary{
+    background:transparent; border:1px solid #5a5a5a; color:var(--text-primary); font-weight:700; font-size:13px;
+    padding:9px 20px; border-radius:24px;
+  }
+  .btn-secondary:hover{border-color:var(--text-primary);}
+  .field-hint{font-size:12px; color:var(--text-faint); margin-top:6px;}
+  .field-error{font-size:12.5px; color:var(--danger); margin-top:6px; display:none;}
+  .field-error.show{display:block;}
+  .field-success{font-size:12.5px; color:var(--accent); margin-top:6px; display:none;}
+  .field-success.show{display:block;}
+  #avatar-file-input{display:none;}
+  .form-actions{display:flex; gap:10px; margin-top:22px;}
+ 
+  .liked-count{font-size:13px; color:var(--text-secondary); margin-top:4px;}
+ 
+  /* ---------- PLAYER BAR ---------- */
+  #player{
+    grid-area:player;
+    background:var(--bg-sidebar);
+    border-radius:var(--radius-lg);
+    display:grid; grid-template-columns:1fr 1.4fr 1fr;
+    align-items:center; padding:0 16px;
+  }
+  #player-track{display:flex; align-items:center; gap:12px; min-width:0;}
+  #player-cover{width:56px; height:56px; border-radius:4px; flex-shrink:0;}
+  #player-track-title{font-size:13.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  #player-track-artist{font-size:11.5px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  #player-like{color:var(--text-secondary); flex-shrink:0;}
+  #player-like svg{width:18px; height:18px;}
+  #player-like.liked{color:var(--accent);}
+ 
+  #player-center{display:flex; flex-direction:column; align-items:center; gap:8px; width:100%;}
+  .transport{display:flex; align-items:center; gap:18px;}
+  .transport button{color:var(--text-secondary);}
+  .transport button:hover{color:var(--text-primary);}
+  .transport svg{width:18px; height:18px;}
+  #play-btn{
+    width:34px; height:34px; border-radius:50%; background:#fff;
+    display:flex; align-items:center; justify-content:center; color:#000;
+  }
+  #play-btn:hover{transform:scale(1.06); background:#fff;}
+  #play-btn svg{width:16px; height:16px; fill:#000;}
+ 
+  .seek-row{display:flex; align-items:center; gap:8px; width:100%; max-width:520px;}
+  .time-label{font-size:11px; color:var(--text-faint); width:36px; text-align:center; flex-shrink:0;}
+  .seek-track{
+    flex:1; height:4px; background:#4d4d4d; border-radius:2px; position:relative; cursor:pointer;
+  }
+  .seek-fill{position:absolute; left:0; top:0; height:100%; background:#fff; border-radius:2px; width:0%;}
+  .seek-track:hover .seek-fill{background:var(--accent);}
+  .seek-handle{
+    position:absolute; top:50%; width:12px; height:12px; border-radius:50%; background:#fff;
+    transform:translate(-50%,-50%); left:0%; opacity:0; transition:opacity .1s;
+  }
+  .seek-track:hover .seek-handle{opacity:1;}
+ 
+  #player-right{display:flex; align-items:center; justify-content:flex-end; gap:12px;}
+  #player-right button{color:var(--text-secondary);}
+  #player-right button:hover{color:var(--text-primary);}
+  #player-right svg{width:17px; height:17px;}
+  .volume-row{display:flex; align-items:center; gap:8px; width:110px;}
+  .volume-track{flex:1; height:4px; background:#4d4d4d; border-radius:2px; position:relative; cursor:pointer;}
+  .volume-fill{position:absolute; left:0; top:0; height:100%; background:#fff; border-radius:2px; width:70%;}
+  .volume-track:hover .volume-fill{background:var(--accent);}
+ 
+  .toast{
+    position:fixed; bottom:110px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:#fff; color:#000; padding:12px 22px; border-radius:8px; font-size:13.5px; font-weight:600;
+    box-shadow:0 8px 24px rgba(0,0,0,0.5); opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
+    z-index:100;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .toast.error{background:var(--danger); color:#fff;}
+ 
+  @media (max-width:900px){
+    #app{grid-template-columns:1fr;}
+    #sidebar{display:none;}
+    #player{grid-template-columns:1fr auto;}
+    #player-center{display:none;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+ 
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div class="logo">
+      <div class="logo-mark">M</div>
+      <div class="logo-text">MusicHub</div>
+    </div>
+    <ul class="nav-list">
+      <li class="nav-item active" data-page="home">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 3.2a1 1 0 0 0-1 0L3 8.5V21a1 1 0 0 0 1 1h5.5a1 1 0 0 0 1-1v-6h5v6a1 1 0 0 0 1 1H21a1 1 0 0 0 1-1V8.5l-9.5-5.3z"/></svg>
+        Trang chủ
+      </li>
+      <li class="nav-item" data-page="search">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.5 3a7.5 7.5 0 0 1 5.9 12.1l5 5-1.4 1.4-5-5A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"/></svg>
+        Tìm kiếm
+      </li>
+      <li class="nav-item" data-page="library">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 4h2v16H3V4zm4 2h2v14H7V6zm4-2h2v16h-2V4zm4 3h2v13h-2V7zm4-3h2v16h-2V4z"/></svg>
+        Thư viện
+      </li>
+    </ul>
+    <div class="sidebar-divider"></div>
+    <div class="lib-header"><span>Danh sách phát</span></div>
+    <ul class="playlist-list" id="playlist-list"></ul>
+  </nav>
+ 
+  <!-- MAIN -->
+  <main id="main">
+    <div id="topbar">
+      <div class="nav-arrows">
+        <button id="btn-back" title="Quay lại"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.7 4.3a1 1 0 0 1 0 1.4L9.4 12l6.3 6.3a1 1 0 1 1-1.4 1.4l-7-7a1 1 0 0 1 0-1.4l7-7a1 1 0 0 1 1.4 0z"/></svg></button>
+        <button id="btn-fwd" title="Tiến"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8.3 4.3a1 1 0 0 0 0 1.4l6.3 6.3-6.3 6.3a1 1 0 1 0 1.4 1.4l7-7a1 1 0 0 0 0-1.4l-7-7a1 1 0 0 0-1.4 0z"/></svg></button>
+      </div>
+      <div id="search-box">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.5 3a7.5 7.5 0 0 1 5.9 12.1l5 5-1.4 1.4-5-5A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"/></svg>
+        <input id="search-input" type="text" placeholder="Bạn muốn nghe gì?" autocomplete="off">
+        <button id="search-clear" title="Xóa">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M12 10.6 17.1 5.5l1.4 1.4L13.4 12l5.1 5.1-1.4 1.4L12 13.4l-5.1 5.1-1.4-1.4L10.6 12 5.5 6.9l1.4-1.4z"/></svg>
+        </button>
+      </div>
+      <div class="topbar-right">
+        <div id="profile-chip" data-page="profile">
+          <div class="avatar-round" id="chip-avatar">U</div>
+          <span id="profile-chip-name">Bạn</span>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- HOME PAGE -->
+    <section class="page active" id="page-home">
+      <div class="section-row"><h2 class="section-title" id="home-greeting">Chào buổi tối</h2></div>
+      <div class="card-grid" id="home-quick"></div>
+ 
+      <div class="section-row"><h2 class="section-title">Dành cho bạn</h2><span class="see-all" data-page="library">Xem tất cả</span></div>
+      <div class="card-grid" id="home-foryou"></div>
+ 
+      <div class="section-row"><h2 class="section-title">Nghệ sĩ nổi bật</h2></div>
+      <div class="card-grid" id="home-artists"></div>
+    </section>
+ 
+    <!-- SEARCH PAGE -->
+    <section class="page" id="page-search">
+      <h2 class="section-title" style="margin-top:24px;">Tìm kiếm</h2>
+      <div id="search-empty-state">
+        <div class="genre-grid" id="genre-grid"></div>
+      </div>
+      <div id="search-results">
+        <div class="track-header-row">
+          <span>#</span><span>Tiêu đề</span><span>Album</span><span style="text-align:right;">Thời lượng</span>
+        </div>
+        <div id="search-results-list"></div>
+      </div>
+    </section>
+ 
+    <!-- LIBRARY PAGE -->
+    <section class="page" id="page-library">
+      <h2 class="section-title" style="margin-top:24px;">Bài hát đã thích</h2>
+      <div class="liked-count" id="liked-count">0 bài hát</div>
+      <div style="margin-top:16px;">
+        <div class="track-header-row">
+          <span>#</span><span>Tiêu đề</span><span>Album</span><span style="text-align:right;">Thời lượng</span>
+        </div>
+        <div id="liked-list"></div>
+      </div>
+    </section>
+ 
+    <!-- PROFILE PAGE -->
+    <section class="page" id="page-profile">
+      <div id="profile-hero">
+        <div id="profile-avatar-wrap">
+          <div id="profile-avatar">U</div>
+          <button id="avatar-edit-btn" title="Đổi ảnh đại diện">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 3l-1.8 2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3H9zm3 6a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
+          </button>
+          <input type="file" id="avatar-file-input" accept="image/png, image/jpeg, image/webp, image/gif">
+        </div>
+        <div class="profile-meta">
+          <span>Hồ sơ</span>
+          <h1 id="profile-name-display">Bạn</h1>
+          <div class="profile-sub" id="profile-liked-sub">0 bài hát đã thích</div>
+        </div>
+      </div>
+      <div id="profile-body">
+        <div class="settings-card">
+          <div class="field-group">
+            <label class="field-label" for="profile-name-input">Tên hiển thị</label>
+            <input class="text-input" id="profile-name-input" type="text" maxlength="30" placeholder="Nhập tên của bạn">
+            <div class="field-hint">Tối đa 30 ký tự. Tên này hiển thị trên hồ sơ và thanh điều hướng.</div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Ảnh đại diện</label>
+            <div style="display:flex; align-items:center; gap:14px;">
+              <div class="avatar-round" id="settings-avatar-preview" style="width:56px;height:56px;font-size:20px;">U</div>
+              <button class="btn-secondary" id="choose-avatar-btn">Chọn ảnh</button>
+              <button class="btn-secondary" id="remove-avatar-btn">Xóa ảnh</button>
+            </div>
+            <div class="field-hint">Chỉ chấp nhận file ảnh thật (JPG, PNG, WEBP, GIF), tối đa 5MB. Hệ thống kiểm tra định dạng thực của file để chặn file giả mạo/độc hại.</div>
+            <div class="field-error" id="avatar-error"></div>
+            <div class="field-success" id="avatar-success"></div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-primary" id="save-profile-btn">Lưu thay đổi</button>
+            <span class="field-success" id="save-success" style="align-self:center;">Đã lưu hồ sơ ✓</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+ 
+  <!-- PLAYER -->
+  <div id="player">
+    <div id="player-track">
+      <img id="player-cover" class="mini-cover" src="" style="display:none;">
+      <div id="player-cover-fallback" class="mini-cover" style="width:56px;height:56px;border-radius:4px;background:#282828;display:flex;align-items:center;justify-content:center;">
+        <svg viewBox="0 0 24 24" fill="#6a6a6a" width="20" height="20"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      </div>
+      <div style="min-width:0;">
+        <div id="player-track-title">Chưa phát bài nào</div>
+        <div id="player-track-artist">—</div>
+      </div>
+      <button id="player-like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.6-10-9.3C.6 8 2 4.5 5.5 4.5c2 0 3.3 1.1 4 2.2.7-1.1 2-2.2 4-2.2C17 4.5 18.4 8 22 11.7 19.5 16.4 12 21 12 21z"/></svg></button>
+    </div>
+ 
+    <div id="player-center">
+      <div class="transport">
+        <button id="btn-shuffle" title="Trộn bài"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 3l4 4-4 4v-3h-3.6L9 13.6 6.3 21H2v-2h3l4-8-4-8H2V1h4.3L9 8.4 13.4 4H17V1zm0 12v-3l4 4-4 4v-3h-3.6l-1.6-2.4 1.2-1.9L14.4 15z"/></svg></button>
+        <button id="btn-prev" title="Bài trước"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 10-6v12z" transform="scale(-1,1) translate(-24,0)"/></svg></button>
+        <button id="play-btn" title="Phát/Dừng">
+          <svg id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="icon-pause" style="display:none;" viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+        </button>
+        <button id="btn-next" title="Bài tiếp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l10 6-10 6z"/></svg></button>
+        <button id="btn-repeat" title="Lặp lại"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg></button>
+      </div>
+      <div class="seek-row">
+        <span class="time-label" id="time-current">0:00</span>
+        <div class="seek-track" id="seek-track">
+          <div class="seek-fill" id="seek-fill"></div>
+          <div class="seek-handle" id="seek-handle"></div>
+        </div>
+        <span class="time-label" id="time-total">0:00</span>
+      </div>
+    </div>
+ 
+    <div id="player-right">
+      <button title="Danh sách phát"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5h14v2H3V5zm0 6h14v2H3v-2zm0 6h10v2H3v-2zM19 9v8.2a2.8 2.8 0 1 0 2 2.7V11h3V9h-5z"/></svg></button>
+      <div class="volume-row">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17"><path d="M4 9v6h4l5 5V4L8 9H4z"/></svg>
+        <div class="volume-track" id="volume-track"><div class="volume-fill" id="volume-fill"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+<div class="toast" id="toast"></div>
+<audio id="audio-el"></audio>
+ 
+<script>
+(function(){
+  "use strict";
+ 
+  /* ================= DATA ================= */
+  const palettes = [
+    ["#ff6b6b","#c92a2a"], ["#ffa94d","#e8590c"], ["#ffd43b","#f08c00"],
+    ["#69db7c","#2b8a3e"], ["#38d9a9","#087f5b"], ["#3bc9db","#0b7285"],
+    ["#4dabf7","#1864ab"], ["#748ffc","#3b5bdb"], ["#9775fa","#5f3dc4"],
+    ["#da77f2","#862e9c"], ["#f783ac","#a61e4d"], ["#ff8787","#e03131"],
+    ["#66d9e8","#0c8599"], ["#63e6be","#099268"], ["#ffe066","#f59f00"],
+    ["#b197fc","#7048e8"]
+  ];
+ 
+  const SOUND_BASE = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-";
+  function trackSrc(n){ return SOUND_BASE + n + ".mp3"; }
+ 
+  const rawSongs = [
+    {t:"Midnight Drive", a:"Nova Ember", al:"Neon Afterglow", n:1},
+    {t:"Glass Horizon", a:"The Wandering Static", al:"Glass Horizon EP", n:2},
+    {t:"Paper Lanterns", a:"Nova Ember", al:"Neon Afterglow", n:3},
+    {t:"Slow Tide", a:"Coral & Iris", al:"Slow Tide", n:4},
+    {t:"Electric Rain", a:"Kilo Violet", al:"Voltage Dreams", n:5},
+    {t:"Amber Skyline", a:"The Wandering Static", al:"Glass Horizon EP", n:6},
+    {t:"Velvet Static", a:"Coral & Iris", al:"Slow Tide", n:7},
+    {t:"Chrome Butterfly", a:"Kilo Violet", al:"Voltage Dreams", n:8},
+    {t:"Quiet Machines", a:"Halide Moon", al:"Quiet Machines", n:9},
+    {t:"Copper Sunrise", a:"Nova Ember", al:"Neon Afterglow", n:10},
+    {t:"Static Bloom", a:"Halide Moon", al:"Quiet Machines", n:11},
+    {t:"Faded Polaroid", a:"Coral & Iris", al:"Slow Tide", n:12},
+    {t:"Runway Lights", a:"Kilo Violet", al:"Voltage Dreams", n:13},
+    {t:"Low Orbit", a:"The Wandering Static", al:"Glass Horizon EP", n:14},
+    {t:"Marble Echo", a:"Halide Moon", al:"Quiet Machines", n:15},
+    {t:"Afterglow Radio", a:"Nova Ember", al:"Neon Afterglow", n:16}
+  ];
+ 
+  const songs = rawSongs.map((s,i)=>{
+    const pal = palettes[i % palettes.length];
+    const mins = 2 + (i % 3);
+    const secs = 10 + (i*7)%50;
+    return {
+      id:"song-"+i,
+      title:s.t, artist:s.a, album:s.al,
+      duration: mins*60+secs,
+      durationLabel: mins+":"+String(secs).padStart(2,"0"),
+      color1:pal[0], color2:pal[1],
+      src: trackSrc(s.n)
+    };
+  });
+ 
+  const artists = [...new Set(songs.map(s=>s.artist))].map(name=>{
+    const first = songs.find(s=>s.artist===name);
+    return {name, color1:first.color1, color2:first.color2};
+  });
+ 
+  const genres = [
+    {name:"Chill", c1:"#0b7285", c2:"#0c8599"},
+    {name:"Điện tử", c1:"#5f3dc4", c2:"#7048e8"},
+    {name:"Indie", c1:"#c92a2a", c2:"#e8590c"},
+    {name:"Synthwave", c1:"#862e9c", c2:"#a61e4d"},
+    {name:"Acoustic", c1:"#2b8a3e", c2:"#087f5b"},
+    {name:"Lofi", c1:"#e8590c", c2:"#f08c00"},
+    {name:"Dream Pop", c1:"#1864ab", c2:"#3b5bdb"},
+    {name:"Ambient", c1:"#099268", c2:"#0b7285"}
+  ];
+ 
+  /* ================= STATE ================= */
+  let currentIndex = -1;
+  let isPlaying = false;
+  let isShuffle = false;
+  let isRepeat = false;
+  let likedIds = new Set();
+  let profile = {name:"Bạn", avatar:null};
+  const audio = document.getElementById("audio-el");
+ 
+  /* ================= STORAGE ================= */
+  async function loadProfile(){
+    try{
+      const res = await window.storage.get("musichub_profile", false);
+      if(res && res.value){
+        const parsed = JSON.parse(res.value);
+        profile.name = parsed.name || "Bạn";
+        profile.avatar = parsed.avatar || null;
+      }
+    }catch(e){ /* no saved profile yet */ }
+    try{
+      const res2 = await window.storage.get("musichub_liked", false);
+      if(res2 && res2.value){
+        likedIds = new Set(JSON.parse(res2.value));
+      }
+    }catch(e){ /* none yet */ }
+    renderProfileUI();
+    renderLiked();
+  }
+  async function saveProfile(){
+    try{
+      await window.storage.set("musichub_profile", JSON.stringify(profile), false);
+    }catch(e){ showToast("Không thể lưu hồ sơ lúc này.", true); }
+  }
+  async function saveLiked(){
+    try{
+      await window.storage.set("musichub_liked", JSON.stringify([...likedIds]), false);
+    }catch(e){ /* ignore */ }
+  }
+ 
+  /* ================= HELPERS ================= */
+  function fmtTime(sec){
+    if(!isFinite(sec) || sec<0) sec=0;
+    const m = Math.floor(sec/60), s = Math.floor(sec%60);
+    return m+":"+String(s).padStart(2,"0");
+  }
+  function showToast(msg, isError){
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.className = "toast show" + (isError?" error":"");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=>{ el.className="toast"; }, 2600);
+  }
+  function coverStyle(c1,c2){
+    return "background:linear-gradient(135deg,"+c1+","+c2+");";
+  }
+  function initials(name){
+    return (name||"U").trim().charAt(0).toUpperCase() || "U";
+  }
+ 
+  /* ================= RENDER: HOME ================= */
+  function songCardHTML(song){
+    return '<div class="song-card" data-id="'+song.id+'">'+
+      '<div class="cover" style="'+coverStyle(song.color1,song.color2)+'">'+
+        '<div class="cover-eq"><span></span><span></span><span></span><span></span></div>'+
+      '</div>'+
+      '<div class="play-fab"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>'+
+      '<div class="song-card-title">'+song.title+'</div>'+
+      '<div class="song-card-sub">'+song.artist+'</div>'+
+    '</div>';
+  }
+  function artistCardHTML(artist){
+    return '<div class="song-card" data-artist="'+artist.name+'">'+
+      '<div class="cover" style="'+coverStyle(artist.color1,artist.color2)+'; border-radius:50%;"></div>'+
+      '<div class="song-card-title">'+artist.name+'</div>'+
+      '<div class="song-card-sub">Nghệ sĩ</div>'+
+    '</div>';
+  }
+ 
+  function renderHome(){
+    const hour = new Date().getHours();
+    document.getElementById("home-greeting").textContent =
+      hour<12 ? "Chào buổi sáng" : hour<18 ? "Chào buổi chiều" : "Chào buổi tối";
+ 
+    document.getElementById("home-quick").innerHTML = songs.slice(0,6).map(songCardHTML).join("");
+    document.getElementById("home-foryou").innerHTML = songs.slice(4,12).map(songCardHTML).join("");
+    document.getElementById("home-artists").innerHTML = artists.map(artistCardHTML).join("");
+ 
+    document.getElementById("playlist-list").innerHTML = artists.map(a=>
+      '<li class="playlist-item" data-artist="'+a.name+'"><b>'+a.name+'</b><span>Nghệ sĩ · MusicHub</span></li>'
+    ).join("");
+  }
+ 
+  /* ================= RENDER: SEARCH ================= */
+  function renderGenreGrid(){
+    document.getElementById("genre-grid").innerHTML = genres.map(g=>
+      '<div class="genre-card" data-genre="'+g.name+'" style="background:linear-gradient(135deg,'+g.c1+','+g.c2+');">'+
+        g.name+
+        '<svg class="deco" viewBox="0 0 24 24" fill="rgba(255,255,255,0.35)"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>'+
+      '</div>'
+    ).join("");
+  }
+ 
+  function trackRowHTML(song, idx){
+    const playing = currentIndex>=0 && songs[currentIndex].id===song.id && isPlaying;
+    return '<div class="track-row'+(playing?" playing":"")+'" data-id="'+song.id+'">'+
+      '<div class="track-idx"><span class="row-num">'+(idx+1)+'</span>'+
+        '<span class="row-eq"><span></span><span></span><span></span></span></div>'+
+      '<div class="track-main">'+
+        '<div class="mini-cover" style="'+coverStyle(song.color1,song.color2)+'"></div>'+
+        '<div style="min-width:0;">'+
+          '<div class="track-title">'+song.title+'</div>'+
+          '<div class="track-artist">'+song.artist+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="track-album">'+song.album+'</div>'+
+      '<div class="track-duration">'+song.durationLabel+'</div>'+
+    '</div>';
+  }
+ 
+  function runSearch(query){
+    const box = document.getElementById("search-box");
+    const empty = document.getElementById("search-empty-state");
+    const results = document.getElementById("search-results");
+    const list = document.getElementById("search-results-list");
+    const q = query.trim().toLowerCase();
+ 
+    box.classList.toggle("has-text", q.length>0);
+ 
+    if(q.length===0){
+      empty.classList.remove("hidden");
+      results.classList.remove("active");
+      return;
+    }
+    empty.classList.add("hidden");
+    results.classList.add("active");
+ 
+    const matches = songs.filter(s=>
+      s.title.toLowerCase().includes(q) ||
+      s.artist.toLowerCase().includes(q) ||
+      s.album.toLowerCase().includes(q)
+    );
+ 
+    if(matches.length===0){
+      list.innerHTML = '<div class="no-results"><b>Không tìm thấy kết quả cho "'+escapeHtml(query)+'"</b>Kiểm tra chính tả hoặc thử một từ khóa khác.</div>';
+      return;
+    }
+    list.innerHTML = matches.map((s,i)=>trackRowHTML(s, songs.indexOf(s))).join("");
+  }
+  function escapeHtml(str){
+    const d = document.createElement("div");
+    d.textContent = str;
+    return d.innerHTML;
+  }
+ 
+  /* ================= RENDER: LIBRARY ================= */
+  function renderLiked(){
+    const liked = songs.filter(s=>likedIds.has(s.id));
+    document.getElementById("liked-count").textContent = liked.length+" bài hát";
+    document.getElementById("profile-liked-sub").textContent = liked.length+" bài hát đã thích";
+    const list = document.getElementById("liked-list");
+    if(liked.length===0){
+      list.innerHTML = '<div class="no-results"><b>Chưa có bài hát nào</b>Nhấn biểu tượng trái tim khi nghe nhạc để lưu vào đây.</div>';
+    } else {
+      list.innerHTML = liked.map(s=>trackRowHTML(s, songs.indexOf(s))).join("");
+    }
+  }
+ 
+  /* ================= RENDER: PROFILE ================= */
+  function renderProfileUI(){
+    document.getElementById("profile-name-display").textContent = profile.name;
+    document.getElementById("profile-chip-name").textContent = profile.name;
+    document.getElementById("profile-name-input").value = profile.name;
+ 
+    const initial = initials(profile.name);
+    const avatarBig = document.getElementById("profile-avatar");
+    const avatarChip = document.getElementById("chip-avatar");
+    const avatarSettings = document.getElementById("settings-avatar-preview");
+ 
+    [avatarBig, avatarChip, avatarSettings].forEach(el=>{
+      if(profile.avatar){
+        el.innerHTML = '<img src="'+profile.avatar+'" alt="Ảnh đại diện">';
+      } else {
+        el.textContent = initial;
+        el.innerHTML = initial;
+      }
+    });
+  }
+ 
+  /* ================= PLAYBACK ================= */
+  function playSongByIndex(idx, autoplay){
+    if(idx<0 || idx>=songs.length) return;
+    currentIndex = idx;
+    const song = songs[idx];
+    audio.src = song.src;
+    document.getElementById("player-track-title").textContent = song.title;
+    document.getElementById("player-track-artist").textContent = song.artist;
+ 
+    const cover = document.getElementById("player-cover");
+    const fallback = document.getElementById("player-cover-fallback");
+    cover.style.display = "none";
+    fallback.style.background = "linear-gradient(135deg,"+song.color1+","+song.color2+")";
+    fallback.innerHTML = "";
+    fallback.style.display = "flex";
+ 
+    updateLikeButton();
+    if(autoplay){
+      audio.play().catch(()=>{ showToast("Không thể phát bài hát này.", true); });
+    }
+    refreshAllRowStates();
+  }
+ 
+  function togglePlay(){
+    if(currentIndex===-1){
+      playSongByIndex(0, true);
+      return;
+    }
+    if(audio.paused){ audio.play().catch(()=>{}); }
+    else { audio.pause(); }
+  }
+ 
+  function playNext(){
+    if(songs.length===0) return;
+    let idx;
+    if(isShuffle){
+      idx = Math.floor(Math.random()*songs.length);
+    } else {
+      idx = (currentIndex+1) % songs.length;
+    }
+    playSongByIndex(idx, true);
+  }
+  function playPrev(){
+    if(songs.length===0) return;
+    if(audio.currentTime > 3){ audio.currentTime = 0; return; }
+    const idx = (currentIndex-1+songs.length) % songs.length;
+    playSongByIndex(idx, true);
+  }
+ 
+  function updateLikeButton(){
+    const btn = document.getElementById("player-like");
+    if(currentIndex===-1){ btn.classList.remove("liked"); return; }
+    const liked = likedIds.has(songs[currentIndex].id);
+    btn.classList.toggle("liked", liked);
+    btn.querySelector("svg").setAttribute("fill", liked ? "currentColor" : "none");
+  }
+ 
+  function refreshAllRowStates(){
+    document.querySelectorAll(".song-card").forEach(el=>{
+      const playing = currentIndex>=0 && el.dataset.id===songs[currentIndex].id && isPlaying;
+      el.classList.toggle("playing", playing);
+    });
+    document.querySelectorAll(".track-row").forEach(el=>{
+      const playing = currentIndex>=0 && el.dataset.id===songs[currentIndex].id && isPlaying;
+      el.classList.toggle("playing", playing);
+    });
+  }
+ 
+  audio.addEventListener("play", ()=>{
+    isPlaying = true;
+    document.getElementById("icon-play").style.display="none";
+    document.getElementById("icon-pause").style.display="block";
+    refreshAllRowStates();
+  });
+  audio.addEventListener("pause", ()=>{
+    isPlaying = false;
+    document.getElementById("icon-play").style.display="block";
+    document.getElementById("icon-pause").style.display="none";
+    refreshAllRowStates();
+  });
+  audio.addEventListener("ended", ()=>{
+    if(isRepeat){ audio.currentTime=0; audio.play(); }
+    else { playNext(); }
+  });
+  audio.addEventListener("timeupdate", ()=>{
+    const pct = audio.duration ? (audio.currentTime/audio.duration)*100 : 0;
+    document.getElementById("seek-fill").style.width = pct+"%";
+    document.getElementById("seek-handle").style.left = pct+"%";
+    document.getElementById("time-current").textContent = fmtTime(audio.currentTime);
+    document.getElementById("time-total").textContent = fmtTime(audio.duration||0);
+  });
+ 
+  /* ================= EVENT WIRING ================= */
+  function wireNav(){
+    document.querySelectorAll("[data-page]").forEach(el=>{
+      el.addEventListener("click", ()=>{
+        const page = el.dataset.page;
+        document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+        document.getElementById("page-"+page).classList.add("active");
+        document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
+        document.querySelectorAll('.nav-item[data-page="'+page+'"]').forEach(n=>n.classList.add("active"));
+        document.getElementById("main").scrollTo(0,0);
+        if(page==="search"){ document.getElementById("search-input").focus(); }
+      });
+    });
+  }
+ 
+  function wireCardClicks(){
+    document.body.addEventListener("click", (e)=>{
+      const card = e.target.closest(".song-card[data-id]");
+      if(card){
+        const idx = songs.findIndex(s=>s.id===card.dataset.id);
+        playSongByIndex(idx, true);
+        return;
+      }
+      const artistCard = e.target.closest("[data-artist]");
+      if(artistCard){
+        const name = artistCard.dataset.artist;
+        document.querySelector('[data-page="search"]').click();
+        document.getElementById("search-input").value = name;
+        runSearch(name);
+        return;
+      }
+      const row = e.target.closest(".track-row[data-id]");
+      if(row){
+        const idx = songs.findIndex(s=>s.id===row.dataset.id);
+        playSongByIndex(idx, true);
+        return;
+      }
+      const genre = e.target.closest(".genre-card");
+      if(genre){
+        document.getElementById("search-input").value = genre.dataset.genre;
+        runSearch(genre.dataset.genre==="Chill"?"Nova":genre.dataset.genre);
+        return;
+      }
+    });
+  }
+ 
+  function wireSearchInput(){
+    const input = document.getElementById("search-input");
+    input.addEventListener("input", ()=> runSearch(input.value));
+    document.getElementById("search-clear").addEventListener("click", ()=>{
+      input.value = ""; runSearch(""); input.focus();
+    });
+  }
+ 
+  function wireTransport(){
+    document.getElementById("play-btn").addEventListener("click", togglePlay);
+    document.getElementById("btn-next").addEventListener("click", playNext);
+    document.getElementById("btn-prev").addEventListener("click", playPrev);
+    document.getElementById("btn-shuffle").addEventListener("click", (e)=>{
+      isShuffle = !isShuffle;
+      e.currentTarget.style.color = isShuffle ? "var(--accent)" : "";
+    });
+    document.getElementById("btn-repeat").addEventListener("click", (e)=>{
+      isRepeat = !isRepeat;
+      e.currentTarget.style.color = isRepeat ? "var(--accent)" : "";
+    });
+    document.getElementById("player-like").addEventListener("click", ()=>{
+      if(currentIndex===-1) return;
+      const id = songs[currentIndex].id;
+      if(likedIds.has(id)) likedIds.delete(id); else likedIds.add(id);
+      updateLikeButton();
+      renderLiked();
+      saveLiked();
+    });
+  }
+ 
+  function wireSeek(){
+    const track = document.getElementById("seek-track");
+    track.addEventListener("click", (e)=>{
+      if(!audio.duration) return;
+      const rect = track.getBoundingClientRect();
+      const pct = (e.clientX-rect.left)/rect.width;
+      audio.currentTime = pct*audio.duration;
+    });
+    const vtrack = document.getElementById("volume-track");
+    const vfill = document.getElementById("volume-fill");
+    audio.volume = 0.7;
+    vtrack.addEventListener("click", (e)=>{
+      const rect = vtrack.getBoundingClientRect();
+      let pct = (e.clientX-rect.left)/rect.width;
+      pct = Math.max(0, Math.min(1, pct));
+      audio.volume = pct;
+      vfill.style.width = (pct*100)+"%";
+    });
+  }
+ 
+  /* ================= PROFILE: NAME + AVATAR ================= */
+  const MAGIC_BYTES = [
+    {sig:[0xFF,0xD8,0xFF], type:"JPEG"},
+    {sig:[0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A], type:"PNG"},
+    {sig:[0x47,0x49,0x46,0x38], type:"GIF"},
+    {sig:[0x52,0x49,0x46,0x46], type:"RIFF", extra:{offset:8, sig:[0x57,0x45,0x42,0x50], type:"WEBP"}}
+  ];
+ 
+  function detectRealImageType(bytes){
+    for(const m of MAGIC_BYTES){
+      let ok = m.sig.every((b,i)=>bytes[i]===b);
+      if(ok){
+        if(m.extra){
+          const ok2 = m.extra.sig.every((b,i)=>bytes[m.extra.offset+i]===b);
+          if(ok2) return m.extra.type;
+          continue;
+        }
+        return m.type;
+      }
+    }
+    return null;
+  }
+ 
+  function wireAvatarUpload(){
+    const fileInput = document.getElementById("avatar-file-input");
+    const errorEl = document.getElementById("avatar-error");
+    const successEl = document.getElementById("avatar-success");
+ 
+    function resetMsgs(){
+      errorEl.classList.remove("show"); errorEl.textContent="";
+      successEl.classList.remove("show"); successEl.textContent="";
+    }
+ 
+    document.getElementById("avatar-edit-btn").addEventListener("click", ()=>{
+      resetMsgs(); fileInput.click();
+    });
+    document.getElementById("choose-avatar-btn").addEventListener("click", ()=>{
+      resetMsgs(); fileInput.click();
+    });
+    document.getElementById("remove-avatar-btn").addEventListener("click", async ()=>{
+      resetMsgs();
+      profile.avatar = null;
+      renderProfileUI();
+      await saveProfile();
+      showToast("Đã xóa ảnh đại diện.");
+    });
+ 
+    fileInput.addEventListener("change", async (e)=>{
+      resetMsgs();
+      const file = e.target.files[0];
+      fileInput.value = "";
+      if(!file) return;
+ 
+      // 1. Basic MIME check
+      if(!file.type.startsWith("image/")){
+        errorEl.textContent = "File không hợp lệ. Vui lòng chọn một file ảnh (JPG, PNG, WEBP, GIF).";
+        errorEl.classList.add("show");
+        return;
+      }
+      // 2. Size limit (5MB)
+      if(file.size > 5*1024*1024){
+        errorEl.textContent = "Ảnh quá lớn. Kích thước tối đa là 5MB.";
+        errorEl.classList.add("show");
+        return;
+      }
+      // 3. Deep validation: read magic bytes to confirm it's really an image,
+      //    not just a renamed/malicious file with a spoofed extension or MIME type.
+      let realType;
+      try{
+        const buf = await file.slice(0,16).arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        realType = detectRealImageType(bytes);
+      }catch(err){
+        errorEl.textContent = "Không thể đọc file này. Vui lòng thử ảnh khác.";
+        errorEl.classList.add("show");
+        return;
+      }
+      if(!realType){
+        errorEl.textContent = "File này không phải là ảnh hợp lệ hoặc có thể chứa nội dung không an toàn. Đã từ chối tải lên.";
+        errorEl.classList.add("show");
+        return;
+      }
+      // 4. Extra guard: reject files that contain embedded <script tags (e.g. SVG/XML disguised as image, or polyglot files)
+      try{
+        const textSample = await file.slice(0, Math.min(file.size, 4096)).text();
+        if(/<script|<\?php|<%|javascript:/i.test(textSample)){
+          errorEl.textContent = "File chứa nội dung script không an toàn và đã bị từ chối.";
+          errorEl.classList.add("show");
+          return;
+        }
+      }catch(err){ /* binary read failure is fine, ignore */ }
+ 
+      // 5. All checks passed — read as data URL for safe <img> rendering only
+      const reader = new FileReader();
+      reader.onload = async ()=>{
+        profile.avatar = reader.result;
+        renderProfileUI();
+        successEl.textContent = "Ảnh hợp lệ ("+realType+") — đã cập nhật. Nhấn 'Lưu thay đổi' để lưu lại.";
+        successEl.classList.add("show");
+      };
+      reader.onerror = ()=>{
+        errorEl.textContent = "Đã xảy ra lỗi khi đọc file ảnh.";
+        errorEl.classList.add("show");
+      };
+      reader.readAsDataURL(file);
+    });
+ 
+    document.getElementById("save-profile-btn").addEventListener("click", async ()=>{
+      const nameInput = document.getElementById("profile-name-input");
+      const name = nameInput.value.trim();
+      if(name.length===0){
+        showToast("Tên hiển thị không được để trống.", true);
+        return;
+      }
+      profile.name = name.slice(0,30);
+      renderProfileUI();
+      await saveProfile();
+      const successEl2 = document.getElementById("save-success");
+      successEl2.classList.add("show");
+      setTimeout(()=>successEl2.classList.remove("show"), 2200);
+      showToast("Đã lưu hồ sơ.");
+    });
+  }
+ 
+  /* ================= INIT ================= */
+  function init(){
+    renderHome();
+    renderGenreGrid();
+    wireNav();
+    wireCardClicks();
+    wireSearchInput();
+    wireTransport();
+    wireSeek();
+    wireAvatarUpload();
+    loadProfile();
+    document.getElementById("btn-back").addEventListener("click", ()=>history.back());
+    document.getElementById("btn-fwd").addEventListener("click", ()=>history.forward());
+  }
+  init();
+})();
+</script>
+</body>
+</html>
