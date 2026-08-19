@@ -557,68 +557,6 @@
 (function(){
   "use strict";
  
-  /* ================= DATA ================= */
-  const palettes = [
-    ["#ff6b6b","#c92a2a"], ["#ffa94d","#e8590c"], ["#ffd43b","#f08c00"],
-    ["#69db7c","#2b8a3e"], ["#38d9a9","#087f5b"], ["#3bc9db","#0b7285"],
-    ["#4dabf7","#1864ab"], ["#748ffc","#3b5bdb"], ["#9775fa","#5f3dc4"],
-    ["#da77f2","#862e9c"], ["#f783ac","#a61e4d"], ["#ff8787","#e03131"],
-    ["#66d9e8","#0c8599"], ["#63e6be","#099268"], ["#ffe066","#f59f00"],
-    ["#b197fc","#7048e8"]
-  ];
- 
-  const SOUND_BASE = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-";
-  function trackSrc(n){ return SOUND_BASE + n + ".mp3"; }
- 
-  const rawSongs = [
-    {t:"Midnight Drive", a:"Nova Ember", al:"Neon Afterglow", n:1},
-    {t:"Glass Horizon", a:"The Wandering Static", al:"Glass Horizon EP", n:2},
-    {t:"Paper Lanterns", a:"Nova Ember", al:"Neon Afterglow", n:3},
-    {t:"Slow Tide", a:"Coral & Iris", al:"Slow Tide", n:4},
-    {t:"Electric Rain", a:"Kilo Violet", al:"Voltage Dreams", n:5},
-    {t:"Amber Skyline", a:"The Wandering Static", al:"Glass Horizon EP", n:6},
-    {t:"Velvet Static", a:"Coral & Iris", al:"Slow Tide", n:7},
-    {t:"Chrome Butterfly", a:"Kilo Violet", al:"Voltage Dreams", n:8},
-    {t:"Quiet Machines", a:"Halide Moon", al:"Quiet Machines", n:9},
-    {t:"Copper Sunrise", a:"Nova Ember", al:"Neon Afterglow", n:10},
-    {t:"Static Bloom", a:"Halide Moon", al:"Quiet Machines", n:11},
-    {t:"Faded Polaroid", a:"Coral & Iris", al:"Slow Tide", n:12},
-    {t:"Runway Lights", a:"Kilo Violet", al:"Voltage Dreams", n:13},
-    {t:"Low Orbit", a:"The Wandering Static", al:"Glass Horizon EP", n:14},
-    {t:"Marble Echo", a:"Halide Moon", al:"Quiet Machines", n:15},
-    {t:"Afterglow Radio", a:"Nova Ember", al:"Neon Afterglow", n:16}
-  ];
- 
-  const songs = rawSongs.map((s,i)=>{
-    const pal = palettes[i % palettes.length];
-    const mins = 2 + (i % 3);
-    const secs = 10 + (i*7)%50;
-    return {
-      id:"song-"+i,
-      title:s.t, artist:s.a, album:s.al,
-      duration: mins*60+secs,
-      durationLabel: mins+":"+String(secs).padStart(2,"0"),
-      color1:pal[0], color2:pal[1],
-      src: trackSrc(s.n)
-    };
-  });
- 
-  const artists = [...new Set(songs.map(s=>s.artist))].map(name=>{
-    const first = songs.find(s=>s.artist===name);
-    return {name, color1:first.color1, color2:first.color2};
-  });
- 
-  const genres = [
-    {name:"Chill", c1:"#0b7285", c2:"#0c8599"},
-    {name:"Điện tử", c1:"#5f3dc4", c2:"#7048e8"},
-    {name:"Indie", c1:"#c92a2a", c2:"#e8590c"},
-    {name:"Synthwave", c1:"#862e9c", c2:"#a61e4d"},
-    {name:"Acoustic", c1:"#2b8a3e", c2:"#087f5b"},
-    {name:"Lofi", c1:"#e8590c", c2:"#f08c00"},
-    {name:"Dream Pop", c1:"#1864ab", c2:"#3b5bdb"},
-    {name:"Ambient", c1:"#099268", c2:"#0b7285"}
-  ];
- 
   /* ================= STATE ================= */
   let currentIndex = -1;
   let isPlaying = false;
